@@ -43,7 +43,7 @@ export default function StarknetProvider({ children }: StarknetProviderProps) {
       try {
         const { wallet: connectedWallet } = await connect({
           // provider,
-          modalMode: "canAsk",
+          modalMode: "alwaysAsk",
           webWalletUrl: import.meta.env.VITE_ARGENT_WEBWALLET_URL,
           argentMobileOptions: {
             dappName: "Student Registry",
