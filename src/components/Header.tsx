@@ -12,7 +12,7 @@ export default function Header() {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const parseBigInt = (key: string, value: any) => {
+  const parseBigInt = (value: any) => {
     return typeof value === "string" && /^\d+n$/.test(value)
       ? BigInt(value.slice(0, -1))
       : value;
@@ -52,7 +52,6 @@ export default function Header() {
       setConnectorData(connectorData);
 
       if (connectorData) {
-        // Store connection data with BigInt-safe JSON serialization
         localStorage.setItem(
           "wallet",
           JSON.stringify(connectedWallet, (_, value) =>
