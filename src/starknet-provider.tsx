@@ -23,14 +23,14 @@ interface StarknetProviderProps {
 
 export default function StarknetProvider({ children }: StarknetProviderProps) {
   const chains = [sepolia];
-  const [wallet, setWallet] = useState<StarknetWindowObject | null | undefined>();
+  const [wallet, setWallet] = useState<StarknetWindowObject | null | undefined>(null);
   const [connectorData, setConnectorData] = useState<ConnectorData | null>(null);
 
 
   useEffect(() => {
     const autoConnect = async () => {
       try {
-        const { wallet: connectedWallet, connectorData, connector } = await connect({
+        const { wallet: connectedWallet, connectorData } = await connect({
           modalMode: "alwaysAsk",
           webWalletUrl: import.meta.env.VITE_ARGENT_WEBWALLET_URL,
           argentMobileOptions: {
@@ -40,8 +40,18 @@ export default function StarknetProvider({ children }: StarknetProviderProps) {
             icons: [],
           },
         });
+
         setWallet(connectedWallet);
-        setConnectorData(connectorData)
+        setConnectorData(connectorData);
+        
+        // debugging, remove
+        console.log("Wallet: ", wallet);
+        console.log("connectedWallet: ", connectedWallet);
+        //debugging
+        
+        if (connectorData !== null) {
+          toast.success("Connected successfully");
+        }
       } catch (e) {
         console.error(e);
         toast.error((e as any).message);
@@ -53,22 +63,13 @@ export default function StarknetProvider({ children }: StarknetProviderProps) {
     }
   }, []);
 
-  // handle disconnect properly
-  // useEffect(() => {
-  //   if (typeof window !== "undefined") {
-  //     document.addEventListener("wallet_disconnected", async () => {
-  //       setWallet(null);
-  //     });
-  //   }
-  // }, []);
-
   return (
     <WalletContext.Provider value={
       {
         wallet,
         setWallet,
-        connectorData: connectorData,
-        setConnectorData: setConnectorData
+        connectorData,
+        setConnectorData
       }
     }>
       <StarknetConfig chains={chains} provider={publicProvider()} connectors={connectors}>
