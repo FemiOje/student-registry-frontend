@@ -43,7 +43,7 @@ export default function Table() {
         <tbody>
           {studentContractData?.map((item) => (
             <TableRow
-              key={item.id.toString()} // Convert BigInt ID to string for unique key
+              key={item.id.toString()}
               id={item.id}
               age={item.age}
               fname={item.fname}

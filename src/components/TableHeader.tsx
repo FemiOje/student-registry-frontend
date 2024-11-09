@@ -1,6 +1,6 @@
 export default function TableHeader() {
     return (
-        <thead className="bg-gray-100">
+        <thead className="bg-gray-100 w-100">
             <tr>
                 <th className="px-4 py-2 text-left text-gray-600 font-semibold">ID</th>
                 <th className="px-4 py-2 text-left text-gray-600 font-semibold">First Name</th>
@@ -8,6 +8,8 @@ export default function TableHeader() {
                 <th className="px-4 py-2 text-left text-gray-600 font-semibold">Age</th>
                 <th className="px-4 py-2 text-left text-gray-600 font-semibold">Active</th>
                 <th className="px-4 py-2 text-left text-gray-600 font-semibold">Phone Number</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-semibold"></th>{ /*edit*/ }
+                <th className="px-4 py-2 text-left text-gray-600 font-semibold"></th>{ /* delete */ }
             </tr>
         </thead>
 
