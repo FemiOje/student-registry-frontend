@@ -5,4 +5,11 @@ function bigIntToString(bigInt: BigInt) {
     return shortString.decodeShortString(hexValue);
 }
 
-export { bigIntToString };
+
+function parseBigInt(value: any) {
+    return typeof value === "string" && /^\d+n$/.test(value)
+      ? BigInt(value.slice(0, -1))
+      : value;
+  };
+
+export { bigIntToString, parseBigInt };

@@ -18,7 +18,7 @@ interface StudentData {
 export default function Table() {
   const [studentContractData, setStudentContractData] = useState<StudentData[]>([]);
 
-  const { data, error } = useReadContract({
+  const { data, error, isLoading } = useReadContract({
     abi: student_contract_abi,
     functionName: "get_all_students",
     address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
@@ -26,6 +26,11 @@ export default function Table() {
   });
 
   useEffect(() => {
+    toast.loading("Fetching data");
+    if (!isLoading) {
+      toast.dismiss();
+    }
+    
     if (error) {
       toast.error("Error occurred fetching contract data. Please refresh the page.");
       return;
@@ -34,7 +39,7 @@ export default function Table() {
       console.log("Data: ", data);
       setStudentContractData(data);
     }
-  }, [data, error]);
+  }, [data, error, isLoading]);
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 sm:p-8">

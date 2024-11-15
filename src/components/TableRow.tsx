@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { bigIntToString } from "../helpers/converters";
+import { useContract, useSendTransaction } from "@starknet-react/core";
+import { student_contract_abi } from "../abis/student_contract_abi";
+import { WalletContext } from "../starknet-provider";
+import toast from "react-hot-toast";
 
 interface TableRowProps {
   age: bigint;
@@ -19,18 +23,91 @@ export default function TableRow({
   lname,
   phone_number,
 }: TableRowProps) {
+
+  const walletContext = useContext(WalletContext);
+
+  if (walletContext) {
+    console.log("Connector Data: ", walletContext.connectorData);
+  }
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [ editData, setEditData ] = useState();
 
-  const handleDelete = () => {
-    // Add the actual delete logic here
-    setIsDeleteModalOpen(false);
+  // Convert BigInt values to strings for editing in the modal
+  const [studentData, setStudentData] = useState({
+    id,
+    fname: bigIntToString(fname),
+    lname: bigIntToString(lname),
+    age: age.toString(),
+    is_active,
+    phone_number: phone_number.toString()
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setStudentData({
+      ...studentData,
+      [name]: value,
+    });
   };
 
+  const { contract } = useContract({
+    abi: student_contract_abi,
+    address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
+  });
+
+  console.log("Contract: ", contract);
+  console.log("Account address: ", walletContext?.connectorData?.account);
+
+  const { send, status, error, data } = useSendTransaction({
+    calls:
+      contract && walletContext?.connectorData?.account && id
+        ? [contract.populate("delete_student", [id])]
+        : undefined,
+  });
+
+  const errorMessage = error?.message?.toString() || "An unexpected error occurred";
+
+  useEffect(() => {
+    switch (status) {
+      case "success":
+        toast.dismiss();
+        toast.success("Deleted successfully.");
+        break;
+
+      case "error":
+        toast.dismiss();
+        toast.error(errorMessage);
+        break;
+
+      case "idle":
+        toast.dismiss();
+        toast.error("Request is idle. Try again.");
+        break;
+
+      case "pending":
+        toast.dismiss();
+        toast.loading("Deleting entry...");
+        break;
+
+
+      default:
+        break;
+    }
+  }, [status, errorMessage])
+
+
+  const handleDelete = () => {
+    send();
+    setIsDeleteModalOpen(false);
+    console.log("Resolved data: ", data);
+  };
+
+
   const handleEdit = () => {
-    // Add the actual edit logic here
     setIsEditModalOpen(false);
+    console.log("Updated student data: ", studentData);
+    // Actual save logic here
   };
 
   return (
@@ -79,7 +156,7 @@ export default function TableRow({
               </button>
               <button
                 className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                onClick={handleDelete}
+                onClick={() => handleDelete()}
               >
                 Delete
               </button>
@@ -98,20 +175,19 @@ export default function TableRow({
                 <label className="block text-gray-700">ID</label>
                 <input
                   type="text"
-                  value={id.toString()}
+                  value={studentData.id.toString()}
                   readOnly
-                  className="w-full px-4 py-2 border rounded focus:outline-none"
+                  disabled
+                  className="w-full text-gray-400 px-4 py-2 border rounded focus:outline-none"
                 />
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700">First Name</label>
                 <input
                   type="text"
-                  value={fname.toString()}
-                  onChange={(e) => {
-                    e.preventDefault();
-                    // setEditData(fname: e, ...editData);
-                  } /* Add logic to handle change */}
+                  name="fname"
+                  value={studentData.fname}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
               </div>
@@ -119,8 +195,9 @@ export default function TableRow({
                 <label className="block text-gray-700">Last Name</label>
                 <input
                   type="text"
-                  value={lname.toString()}
-                  onChange={(e) => {} /* Add logic to handle change */}
+                  name="lname"
+                  value={studentData.lname}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
               </div>
@@ -128,8 +205,9 @@ export default function TableRow({
                 <label className="block text-gray-700">Age</label>
                 <input
                   type="text"
-                  value={age.toString()}
-                  onChange={(e) => {} /* Add logic to handle change */}
+                  name="age"
+                  value={studentData.age}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
               </div>
@@ -137,8 +215,9 @@ export default function TableRow({
                 <label className="block text-gray-700">Phone Number</label>
                 <input
                   type="text"
-                  value={phone_number.toString()}
-                  onChange={(e) => {} /* Add logic to handle change */}
+                  name="phone_number"
+                  value={studentData.phone_number}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
               </div>
