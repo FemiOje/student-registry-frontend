@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { bigIntToString } from "../helpers/converters";
-import { useContract, useSendTransaction } from "@starknet-react/core";
+import { useAccount, useContract, useSendTransaction } from "@starknet-react/core";
 import { student_contract_abi } from "../abis/student_contract_abi";
 import { WalletContext } from "../starknet-provider";
 import toast from "react-hot-toast";
@@ -59,12 +59,14 @@ export default function TableRow({
   console.log("Contract: ", contract);
   console.log("Account address: ", walletContext?.connectorData?.account);
 
+  const { address } = useAccount();
   const { send, status, error, data } = useSendTransaction({
     calls:
-      contract && walletContext?.connectorData?.account && id
+      contract && address && id
         ? [contract.populate("delete_student", [id])]
         : undefined,
   });
+
 
   const errorMessage = error?.message?.toString() || "An unexpected error occurred";
 
@@ -80,16 +82,10 @@ export default function TableRow({
         toast.error(errorMessage);
         break;
 
-      case "idle":
-        toast.dismiss();
-        toast.error("Request is idle. Try again.");
-        break;
-
       case "pending":
         toast.dismiss();
         toast.loading("Deleting entry...");
         break;
-
 
       default:
         break;

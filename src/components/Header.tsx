@@ -8,13 +8,13 @@ import toast from "react-hot-toast";
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const { connect, connectors } = useConnect();
-  console.log(connectors);
   const { disconnect, error } = useDisconnect({});
   const { starknetkitConnectModal } = useStarknetkitConnectModal({
     connectors: availableConnectors as StarknetkitConnector[],
   });
-
+  const { connect, connectors } = useConnect();
+  console.log(connectors);
+  
   const { address, chainId, account } = useAccount();
 
   async function connectWalletWithModal() {
@@ -24,11 +24,6 @@ export default function Header() {
   
       if (!connector) {
         toast.error("No wallet selected.");
-        return;
-      }
-  
-      if (!connector.wallet) {
-        toast.error("Connector not initialized. Please try again.");
         return;
       }
   
