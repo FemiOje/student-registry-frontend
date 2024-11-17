@@ -1,9 +1,8 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { bigIntToString } from "../helpers/converters";
 import { useAccount, useContract, useSendTransaction } from "@starknet-react/core";
 import { student_contract_abi } from "../abis/student_contract_abi";
-import { WalletContext } from "../starknet-provider";
 import toast from "react-hot-toast";
 
 interface TableRowProps {
@@ -24,29 +23,32 @@ export default function TableRow({
   phone_number,
 }: TableRowProps) {
 
-  const walletContext = useContext(WalletContext);
-
-  if (walletContext) {
-    console.log("Connector Data: ", walletContext.connectorData);
-  }
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Convert BigInt values to strings for editing in the modal
-  const [studentData, setStudentData] = useState({
+  // formatted data for display in form
+  const [studentFormData, setStudentFormData] = useState({
     id,
     fname: bigIntToString(fname),
     lname: bigIntToString(lname),
+    phone_number: phone_number.toString(),
     age: age.toString(),
-    is_active,
-    phone_number: phone_number.toString()
+    is_active
   });
+
+  // data to be sent to contract
+  // const [studentEditData, setStudentEditData] = useState({
+  //   id,
+  //   fname: bigIntToString(fname),
+  //   lname: bigIntToString(lname),
+  //   phone_number: phone_number.toString(),
+  //   age: age.toString(),
+  // });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setStudentData({
-      ...studentData,
+    setStudentFormData({
+      ...studentFormData,
       [name]: value,
     });
   };
@@ -56,22 +58,26 @@ export default function TableRow({
     address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
   });
 
-  console.log("Contract: ", contract);
-  console.log("Account address: ", walletContext?.connectorData?.account);
-
   const { address } = useAccount();
-  const { send, status, error, data } = useSendTransaction({
+  const { send: sendDelete, status: deleteStatus, error: deleteError, data: deleteData } = useSendTransaction({
     calls:
       contract && address && id
         ? [contract.populate("delete_student", [id])]
         : undefined,
   });
+  const errorMessage = deleteError?.message?.toString() || "An unexpected error occurred";
+
+  const { send: sendEditStudent, status: editStatus, error: editError, data: editData } = useSendTransaction({
+    calls:
+      contract && address && studentFormData
+        ? [contract.populate("update_student", [studentFormData.id, studentFormData.fname, studentFormData.lname, studentFormData.phone_number, studentFormData.age])]
+        : undefined,
+  });
 
 
-  const errorMessage = error?.message?.toString() || "An unexpected error occurred";
 
   useEffect(() => {
-    switch (status) {
+    switch (deleteStatus) {
       case "success":
         toast.dismiss();
         toast.success("Deleted successfully.");
@@ -90,20 +96,20 @@ export default function TableRow({
       default:
         break;
     }
-  }, [status, errorMessage])
+  }, [deleteStatus, errorMessage])
 
 
   const handleDelete = () => {
-    send();
+    sendDelete();
     setIsDeleteModalOpen(false);
-    console.log("Resolved data: ", data);
+    console.log("Resolved data: ", deleteData);
   };
 
 
   const handleEdit = () => {
+    sendEditStudent();
     setIsEditModalOpen(false);
-    console.log("Updated student data: ", studentData);
-    // Actual save logic here
+    console.log("Updated student data: ", editData);
   };
 
   return (
@@ -171,7 +177,7 @@ export default function TableRow({
                 <label className="block text-gray-700">ID</label>
                 <input
                   type="text"
-                  value={studentData.id.toString()}
+                  value={studentFormData.id.toString()}
                   readOnly
                   disabled
                   className="w-full text-gray-400 px-4 py-2 border rounded focus:outline-none"
@@ -182,7 +188,7 @@ export default function TableRow({
                 <input
                   type="text"
                   name="fname"
-                  value={studentData.fname}
+                  value={studentFormData.fname}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
@@ -192,7 +198,7 @@ export default function TableRow({
                 <input
                   type="text"
                   name="lname"
-                  value={studentData.lname}
+                  value={studentFormData.lname}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
@@ -202,7 +208,7 @@ export default function TableRow({
                 <input
                   type="text"
                   name="age"
-                  value={studentData.age}
+                  value={studentFormData.age}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
@@ -212,7 +218,7 @@ export default function TableRow({
                 <input
                   type="text"
                   name="phone_number"
-                  value={studentData.phone_number}
+                  value={studentFormData.phone_number}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
