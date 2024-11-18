@@ -1,5 +1,5 @@
 import { useStarknetkitConnectModal, StarknetkitConnector } from "starknetkit";
-import { useContext, useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 // import { WalletContext } from "../starknet-provider";
 import { useAccount, useConnect, useDisconnect, Connector } from "@starknet-react/core";
 import { availableConnectors } from "../helpers/connectors";
@@ -8,19 +8,17 @@ import toast from "react-hot-toast";
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const { disconnect, error } = useDisconnect({});
+  const { disconnect } = useDisconnect({});
   const { starknetkitConnectModal } = useStarknetkitConnectModal({
     connectors: availableConnectors as StarknetkitConnector[],
   });
-  const { connect, connectors } = useConnect();
-  console.log(connectors);
+  const { connect } = useConnect();
   
-  const { address, chainId, account } = useAccount();
+  const { address } = useAccount();
 
   async function connectWalletWithModal() {
     try {
       const { connector } = await starknetkitConnectModal();
-      console.log("Connector: ", connector);
   
       if (!connector) {
         toast.error("No wallet selected.");
@@ -35,80 +33,9 @@ export default function Header() {
     }
   }
 
-  // //remove
-  // const walletContext = useContext(WalletContext);
-  // if (!walletContext) {
-  //   throw new Error("Header must be used within a StarknetProvider");
-  // }
-  // const { wallet, setWallet, connectorData, setConnectorData } = walletContext;
-
-  // //remove
-  // const savedConnectionData = useMemo(() => {
-  //   const savedWallet = localStorage.getItem("wallet");
-  //   const savedConnectorData = localStorage.getItem("connectorData");
-  //   return {
-  //     wallet: savedWallet ? JSON.parse(savedWallet, parseBigInt) : null,
-  //     connectorData: savedConnectorData ? JSON.parse(savedConnectorData, parseBigInt) : null,
-  //   };
-  // }, []);
-
-  // //remove
-  // useEffect(() => {
-  //   if (savedConnectionData.wallet && savedConnectionData.connectorData) {
-
-  //     setWallet(savedConnectionData.wallet);
-  //     setConnectorData(savedConnectionData.connectorData);
-  //     toast.success("Reconnected successfully");
-  //   }
-  // }, [savedConnectionData, setWallet, setConnectorData]);
-
-
-  //remove
-  // const connectWallet = async () => {
-  //   try {
-  //     const { wallet: connectedWallet, connectorData } = await connect({
-  //       modalMode: "alwaysAsk",
-  //       webWalletUrl: import.meta.env.VITE_ARGENT_WEBWALLET_URL,
-  //       argentMobileOptions: {
-  //         dappName: "Student Registry",
-  //         url: window.location.hostname,
-  //         chainId: import.meta.env.VITE_CHAIN_ID,
-  //         icons: [],
-  //       },
-  //     });
-  //     setWallet(connectedWallet);
-  //     setConnectorData(connectorData);
-
-  //     if (connectorData) {
-  //       localStorage.setItem(
-  //         "wallet",
-  //         JSON.stringify(connectedWallet, (_, value) =>
-  //           typeof value === "bigint" ? value.toString() : value
-  //         )
-  //       );
-  //       localStorage.setItem(
-  //         "connectorData",
-  //         JSON.stringify(connectorData, (_, value) =>
-  //           typeof value === "bigint" ? value.toString() : value
-  //         )
-  //       );
-  //       toast.success("Connected successfully");
-  //     }
-  //   } catch (e) {
-  //     console.error(e);
-  //     toast.error((e as any).message || "Failed to connect.");
-  //   }
-  // };
-
-  //remove
   const disconnectWallet = async () => {
     try {
       await disconnect();
-      // setWallet(null);
-      // setConnectorData(null);
-      // setDropdownOpen(false);
-      // localStorage.removeItem("wallet");
-      // localStorage.removeItem("connectorData");
       toast.success("Disconnected successfully");
     } catch (error) {
       toast.error("Error occurred." + error + " Please try again.");
@@ -144,7 +71,7 @@ export default function Header() {
           </div>
         ) : (
           <button
-            className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition"
+            className="bg-blue-700 text-white rounded-full px-4 py-2 hover:bg-blue-600 transition"
             onClick={() => connectWalletWithModal()}
           >
             Connect Wallet

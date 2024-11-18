@@ -36,15 +36,6 @@ export default function TableRow({
     is_active
   });
 
-  // data to be sent to contract
-  // const [studentEditData, setStudentEditData] = useState({
-  //   id,
-  //   fname: bigIntToString(fname),
-  //   lname: bigIntToString(lname),
-  //   phone_number: phone_number.toString(),
-  //   age: age.toString(),
-  // });
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setStudentFormData({
@@ -79,17 +70,14 @@ export default function TableRow({
   useEffect(() => {
     switch (deleteStatus) {
       case "success":
-        toast.dismiss();
         toast.success("Deleted successfully.");
         break;
 
       case "error":
-        toast.dismiss();
         toast.error(errorMessage);
         break;
 
       case "pending":
-        toast.dismiss();
         toast.loading("Deleting entry...");
         break;
 
