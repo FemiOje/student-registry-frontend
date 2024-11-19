@@ -1,42 +1,62 @@
 import { useStarknetkitConnectModal, StarknetkitConnector } from "starknetkit";
-import { useState } from "react";
-// import { WalletContext } from "../starknet-provider";
+import { useState, useEffect } from "react";
 import { useAccount, useConnect, useDisconnect, Connector } from "@starknet-react/core";
 import { availableConnectors } from "../helpers/connectors";
 import toast from "react-hot-toast";
 
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { address } = useAccount();
+  const { connect } = useConnect();
 
+  useEffect(() => {
+    const storedConnector = sessionStorage.getItem("connector");
+    if (storedConnector && !address) {
+      const parsedConnector = JSON.parse(storedConnector);
+      const connectorInstance = availableConnectors.find(
+        (c) => c.id === parsedConnector.id
+      ) as Connector;
+
+      if (connectorInstance) {
+        try {
+          connect({ connector: connectorInstance });          
+        } catch (error) {
+          console.error("Reconnect failed:", error);
+          sessionStorage.removeItem("connector");
+        }
+      }
+    }
+  }, [address, connect]);
+  
   const { disconnect } = useDisconnect({});
   const { starknetkitConnectModal } = useStarknetkitConnectModal({
     connectors: availableConnectors as StarknetkitConnector[],
   });
-  const { connect } = useConnect();
-  
-  const { address } = useAccount();
 
   async function connectWalletWithModal() {
     try {
       const { connector } = await starknetkitConnectModal();
-  
+
       if (!connector) {
         toast.error("No wallet selected.");
         return;
       }
-  
-      await connect({ connector: connector as Connector });  
+
+      await connect({ connector: connector as Connector });
       toast.success("Connected successfully");
+
+      sessionStorage.setItem("connector", JSON.stringify({ id: connector.id }));
     } catch (error) {
-      console.error("Error connecting wallet:", error);
-      toast.error("Failed to connect wallet. Please try again.");
+      toast.error("Error occurred. " + error + " Please try again.");
     }
   }
 
   const disconnectWallet = async () => {
     try {
+      setDropdownOpen(false);
       await disconnect();
-      toast.success("Disconnected successfully");
+      sessionStorage.removeItem("connector");
+      toast.success("Wallet disconnected");
     } catch (error) {
       toast.error("Error occurred." + error + " Please try again.");
     }
@@ -62,7 +82,7 @@ export default function Header() {
               <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
                 <button
                   onClick={() => disconnectWallet()}
-                  className="w-full px-4 py-2 text-center text-red-600 hover:bg-red-100"
+                  className="w-full px-4 py-5 text-center text-red-600 hover:bg-red-100"
                 >
                   Disconnect
                 </button>
