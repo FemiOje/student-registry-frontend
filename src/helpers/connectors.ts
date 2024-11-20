@@ -20,3 +20,5 @@ export const availableConnectors = isInArgentMobileAppBrowser()
     new InjectedConnector({ options: { id: "braavos", name: "Braavos" } }),
     new WebWalletConnector({ url: "https://web.argent.xyz" }),
   ];
+
+  
