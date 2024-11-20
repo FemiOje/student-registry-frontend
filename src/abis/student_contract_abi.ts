@@ -1,5 +1,6 @@
 import { type Abi } from "starknet";
 
+
 export const student_contract_abi = [
     {
       "type": "impl",
