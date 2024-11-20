@@ -14,16 +14,93 @@ interface StudentData {
   is_active: boolean;
 }
 
+
 export default function Table() {
   const [studentContractData, setStudentContractData] = useState<StudentData[]>([]);
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState<boolean>(false);
   const [newStudentData, setNewStudentData] = useState({
-    age: Number(16),
-    fname: String("firstname"),
-    lname: String("lastname"),
-    phone_number: Number(8012223333),
+    age: "",
+    fname: String(""),
+    lname: String(""),
+    phone_number: "",
     is_active: Boolean(true)
   });
+
+  const [errors, setErrors] = useState({
+    fname: "",
+    lname: "",
+    phone_number: "",
+    age: "",
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    setNewStudentData({
+      ...newStudentData,
+      [name]: value,
+    });
+
+    switch (name) {
+      case "fname":
+        if (value.length > 31) {
+          setErrors((prev) => ({
+            ...prev,
+            [name]: `${name} cannot exceed 31 characters.`,
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+        break;
+
+      case "lname":
+        if (value.length > 31) {
+          setErrors((prev) => ({
+            ...prev,
+            [name]: `${name} cannot exceed 31 characters.`,
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+        break;
+
+      case "age":
+        if (!/^\d+$/.test(value)) {
+          setErrors((prev) => ({
+            ...prev,
+            age: "Age must be a positive integer.",
+          }));
+        } else if (parseInt(value) <= 0) {
+          setErrors((prev) => ({
+            ...prev,
+            age: "Age must be greater than 0.",
+          }));
+        }
+        else if (BigInt(value) > BigInt("18446744073709551615")) {
+          setErrors((prev) => ({
+            ...prev,
+            age: "Age cannot exceed the maximum value of u64.",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, age: "" }));
+        }
+        break;
+
+      case "phone_number":
+        if (!/^\d{10}$/.test(value)) {
+          setErrors((prev) => ({
+            ...prev,
+            phone_number: "Phone number must be exactly 10 digits.",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, phone_number: "" }));
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
 
 
   const { data: allStudentsData, error: getStudentsError, isLoading: isLoadingAllStudents } = useReadContract({
@@ -44,19 +121,52 @@ export default function Table() {
   const { send: sendAddNewStudent, status: addNewStudentStatus, error: addNewStudentError } = useSendTransaction({
     calls:
       contract && address
-        ? [contract.populate("add_student", [newStudentData.fname, newStudentData.lname, newStudentData.phone_number, newStudentData.age, newStudentData.is_active])]
+        ? [contract.populate("add_student", [
+          newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
+          newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
+          newStudentData.phone_number ? newStudentData.phone_number : 1,
+          newStudentData.age ? newStudentData.age : 1,
+          newStudentData.is_active
+        ])]
         : undefined,
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewStudentData({
-      ...newStudentData,
-      [name]: value,
-    });
-  };
+  let isValid = true;
 
-  const handleAddNewStudent = async () => {
+  const handleAddNewStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors = { fname: "", lname: "", phone_number: "", age: "" };
+
+    if (newStudentData.fname.length > 31) {
+      isValid = false;
+      newErrors.fname = "First name cannot exceed 31 characters.";
+    }
+
+    if (newStudentData.lname.length > 31) {
+      isValid = false;
+      newErrors.lname = "Last name cannot exceed 31 characters.";
+    }
+
+    if (!/^\d+$/.test(newStudentData.age)) {
+      isValid = false;
+      newErrors.age = "Age must be a positive integer.";
+    } else if (BigInt(newStudentData.age) > BigInt("18446744073709551615")) {
+      isValid = false;
+      newErrors.age = "Age cannot exceed the maximum value of u64.";
+    }
+
+    if (!/^\d{10}$/.test(newStudentData.phone_number)) {
+      isValid = false;
+      newErrors.phone_number = "Phone number must be exactly 10 digits.";
+    }
+
+    setErrors(newErrors);
+
+    if (!isValid) return;
+
+    setIsNewStudentModalOpen(false);
+
     await sendAddNewStudent();
     const errorMessage = addNewStudentError?.message?.toString() || "An unexpected error occurred";
 
@@ -76,7 +186,6 @@ export default function Table() {
       default:
         break;
     }
-    setIsNewStudentModalOpen(false);
   };
 
   useEffect(() => {
@@ -93,6 +202,14 @@ export default function Table() {
       setStudentContractData(allStudentsData);
     }
   }, [allStudentsData, getStudentsError, isLoadingAllStudents]);
+
+  const isFormValid =
+    newStudentData.fname.length <= 31 &&
+    newStudentData.lname.length <= 31 &&
+    /^\d+$/.test(newStudentData.age) && parseInt(newStudentData.age) > 0 &&
+    BigInt(newStudentData.age) <= BigInt("18446744073709551615") &&
+    /^\d{10}$/.test(newStudentData.phone_number) &&
+    Object.values(errors).every((error) => error === "");
 
   return (
     <>
@@ -124,8 +241,9 @@ export default function Table() {
       {isNewStudentModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-xl font-semibold mb-4">Edit Student</h2>
+            <h2 className="text-xl font-semibold mb-4">Add New Student</h2>
             <form onSubmit={handleAddNewStudent}>
+
               <div className="mb-4">
                 <label className="block text-gray-700">First Name</label>
                 <input
@@ -135,7 +253,11 @@ export default function Table() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
+                {errors.fname && (
+                  <p className="text-red-500 text-sm">{errors.fname}</p>
+                )}
               </div>
+
               <div className="mb-4">
                 <label className="block text-gray-700">Last Name</label>
                 <input
@@ -145,7 +267,11 @@ export default function Table() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
+                {errors.lname && (
+                  <p className="text-red-500 text-sm">{errors.lname}</p>
+                )}
               </div>
+
               <div className="mb-4">
                 <label className="block text-gray-700">Age</label>
                 <input
@@ -155,7 +281,11 @@ export default function Table() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
+                {errors.age && (
+                  <p className="text-red-500 text-sm">{errors.age}</p>
+                )}
               </div>
+
               <div className="mb-4">
                 <label className="block text-gray-700">Phone Number</label>
                 <input
@@ -165,6 +295,9 @@ export default function Table() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border rounded focus:outline-none"
                 />
+                {errors.phone_number && (
+                  <p className="text-red-500 text-sm">{errors.phone_number}</p>
+                )}
               </div>
               <div className="flex justify-end space-x-4">
                 <button
@@ -175,8 +308,14 @@ export default function Table() {
                   Cancel
                 </button>
                 <button
+                  // type="submit"
+                  // className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className={`px-4 py-2 rounded text-white ${isFormValid
+                    ? "bg-blue-500 hover:bg-blue-600"
+                    : "bg-red-300 cursor-not-allowed"
+                    }`}
+                  disabled={!isFormValid}
                 >
                   Save
                 </button>

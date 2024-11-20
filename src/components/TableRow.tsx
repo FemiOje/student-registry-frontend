@@ -36,13 +36,82 @@ export default function TableRow({
     is_active
   });
 
-  const handleInputChange = (e) => {
+  const [errors, setErrors] = useState({
+    fname: "",
+    lname: "",
+    phone_number: "",
+    age: "",
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
     setStudentFormData({
       ...studentFormData,
       [name]: value,
     });
+
+    switch (name) {
+      case "fname":
+        if (value.length > 31) {
+          setErrors((prev) => ({
+            ...prev,
+            [name]: `${name} cannot exceed 31 characters.`,
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+        break;
+
+      case "lname":
+        if (value.length > 31) {
+          setErrors((prev) => ({
+            ...prev,
+            [name]: `${name} cannot exceed 31 characters.`,
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+        break;
+
+      case "age":
+        if (!/^\d+$/.test(value)) {
+          setErrors((prev) => ({
+            ...prev,
+            age: "Age must be a positive integer.",
+          }));
+        } else if (parseInt(value) <= 0) {
+          setErrors((prev) => ({
+            ...prev,
+            age: "Age must be greater than 0.",
+          }));
+        }
+        else if (BigInt(value) > BigInt("18446744073709551615")) {
+          setErrors((prev) => ({
+            ...prev,
+            age: "Age cannot exceed the maximum value of u64.",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, age: "" }));
+        }
+        break;
+
+      case "phone_number":
+        if (!/^\d{10}$/.test(value)) {
+          setErrors((prev) => ({
+            ...prev,
+            phone_number: "Phone number must be exactly 10 digits.",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, phone_number: "" }));
+        }
+        break;
+
+      default:
+        break;
+    }
   };
+
 
   const { contract } = useContract({
     abi: student_contract_abi,
@@ -50,20 +119,65 @@ export default function TableRow({
   });
 
   const { address } = useAccount();
-  const { send: sendDelete, status: deleteStatus, error: deleteError, data: deleteData } = useSendTransaction({
+  const { send: sendDelete, status: deleteStatus, error: deleteError } = useSendTransaction({
     calls:
       contract && address && id
         ? [contract.populate("delete_student", [id])]
         : undefined,
   });
-  const errorMessage = deleteError?.message?.toString() || "An unexpected error occurred";
 
-  const { send: sendEditStudent, status: editStatus, error: editError, data: editData } = useSendTransaction({
+  const { send: sendEditStudent, status: editStatus, error: editError } = useSendTransaction({
     calls:
       contract && address && studentFormData
-        ? [contract.populate("update_student", [studentFormData.id, studentFormData.fname, studentFormData.lname, studentFormData.phone_number, studentFormData.age])]
+        ? [contract.populate("update_student", [
+          studentFormData.id,
+          studentFormData.fname && studentFormData.fname.length <= 31 ? studentFormData.fname : "null",
+          studentFormData.lname && studentFormData.lname.length <= 31 ? studentFormData.lname : "null",
+          studentFormData.phone_number ? studentFormData.phone_number : 1,
+          studentFormData.age ? studentFormData.age : 1
+        ])]
         : undefined,
   });
+  const deleteErrorMessage = deleteError?.message?.toString() || "An unexpected error occurred";
+  const editErrorMessage = editError?.message?.toString() || "An unexpected error occurred";
+
+  let isValid = true;
+
+  const handleEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors = { fname: "", lname: "", phone_number: "", age: "" };
+
+    if (studentFormData.fname.length > 31) {
+      isValid = false;
+      newErrors.fname = "First name cannot exceed 31 characters.";
+    }
+
+    if (studentFormData.lname.length > 31) {
+      isValid = false;
+      newErrors.lname = "Last name cannot exceed 31 characters.";
+    }
+
+    if (!/^\d+$/.test(studentFormData.age)) {
+      isValid = false;
+      newErrors.age = "Age must be a positive integer.";
+    } else if (BigInt(studentFormData.age) > BigInt("18446744073709551615")) {
+      isValid = false;
+      newErrors.age = "Age cannot exceed the maximum value of u64.";
+    }
+
+    if (!/^\d{10}$/.test(studentFormData.phone_number)) {
+      isValid = false;
+      newErrors.phone_number = "Phone number must be exactly 10 digits.";
+    }
+
+    setErrors(newErrors);
+
+    if (!isValid) return;
+
+    sendEditStudent();
+    setIsEditModalOpen(false);
+  };
 
 
 
@@ -74,7 +188,7 @@ export default function TableRow({
         break;
 
       case "error":
-        toast.error(errorMessage);
+        toast.error(deleteErrorMessage);
         break;
 
       case "pending":
@@ -84,21 +198,41 @@ export default function TableRow({
       default:
         break;
     }
-  }, [deleteStatus, errorMessage])
+  }, [deleteStatus, deleteErrorMessage])
+
+  useEffect(() => {
+    switch (editStatus) {
+      case "success":
+        toast.success("Edited successfully.");
+        break;
+
+      case "error":
+        toast.error(editErrorMessage);
+        break;
+
+      case "pending":
+        toast.loading("Editing entry...");
+        break;
+
+      default:
+        break;
+    }
+  }, [editStatus, editErrorMessage])
 
 
   const handleDelete = () => {
     sendDelete();
     setIsDeleteModalOpen(false);
-    console.log("Resolved data: ", deleteData);
   };
 
-
-  const handleEdit = () => {
-    sendEditStudent();
-    setIsEditModalOpen(false);
-    console.log("Updated student data: ", editData);
-  };
+  const isFormValid =
+    studentFormData.fname.length <= 31 &&
+    studentFormData.lname.length <= 31 &&
+    /^\d+$/.test(studentFormData.age) && 
+    parseInt(studentFormData.age) > 0 &&
+    BigInt(studentFormData.age) <= BigInt("18446744073709551615") &&
+    /^\d{10}$/.test(studentFormData.phone_number) &&
+    Object.values(errors).every((error) => error === "");
 
   return (
     <>
@@ -155,22 +289,11 @@ export default function TableRow({
         </div>
       )}
 
-      {/* Edit Form Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-xl font-semibold mb-4">Edit Student</h2>
             <form onSubmit={handleEdit}>
-              <div className="mb-4">
-                <label className="block text-gray-700">ID</label>
-                <input
-                  type="text"
-                  value={studentFormData.id.toString()}
-                  readOnly
-                  disabled
-                  className="w-full text-gray-400 px-4 py-2 border rounded focus:outline-none"
-                />
-              </div>
               <div className="mb-4">
                 <label className="block text-gray-700">First Name</label>
                 <input
@@ -178,8 +301,12 @@ export default function TableRow({
                   name="fname"
                   value={studentFormData.fname}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none"
+                  className={`w-full px-4 py-2 border rounded focus:outline-none ${errors.fname ? "border-red-500" : ""
+                    }`}
                 />
+                {errors.fname && (
+                  <p className="text-red-500 text-sm">{errors.fname}</p>
+                )}
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700">Last Name</label>
@@ -188,8 +315,12 @@ export default function TableRow({
                   name="lname"
                   value={studentFormData.lname}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none"
+                  className={`w-full px-4 py-2 border rounded focus:outline-none ${errors.lname ? "border-red-500" : ""
+                    }`}
                 />
+                {errors.lname && (
+                  <p className="text-red-500 text-sm">{errors.lname}</p>
+                )}
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700">Age</label>
@@ -198,8 +329,12 @@ export default function TableRow({
                   name="age"
                   value={studentFormData.age}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none"
+                  className={`w-full px-4 py-2 border rounded focus:outline-none ${errors.age ? "border-red-500" : ""
+                    }`}
                 />
+                {errors.age && (
+                  <p className="text-red-500 text-sm">{errors.age}</p>
+                )}
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700">Phone Number</label>
@@ -208,8 +343,12 @@ export default function TableRow({
                   name="phone_number"
                   value={studentFormData.phone_number}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none"
+                  className={`w-full px-4 py-2 border rounded focus:outline-none ${errors.phone_number ? "border-red-500" : ""
+                    }`}
                 />
+                {errors.phone_number && (
+                  <p className="text-red-500 text-sm">{errors.phone_number}</p>
+                )}
               </div>
               <div className="flex justify-end space-x-4">
                 <button
@@ -221,7 +360,11 @@ export default function TableRow({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className={`px-4 py-2 rounded text-white ${isFormValid
+                    ? "bg-blue-500 hover:bg-blue-600"
+                    : "bg-red-300 cursor-not-allowed"
+                    }`}
+                  disabled={!isFormValid}
                 >
                   Save
                 </button>
