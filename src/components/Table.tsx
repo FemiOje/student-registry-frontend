@@ -219,22 +219,28 @@ export default function Table() {
           {/* <button className="bg-blue-700 text-white p-3 mx-2 rounded-md hover:bg-blue-600">Refresh</button> */}
         </div>
 
-        <table className="w-full max-w-2xl border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-          <TableHeader />
-          <tbody>
-            {studentContractData?.map((item) => (
-              <TableRow
-                key={item.id.toString()}
-                id={item.id}
-                age={item.age}
-                fname={item.fname}
-                lname={item.lname}
-                phone_number={item.phone_number}
-                is_active={item.is_active}
-              />
-            ))}
-          </tbody>
-        </table>
+        {studentContractData.length === 0 ?
+          <div className="ml-auto">
+            <h2 className="font-semibold">No student records to show.</h2>
+          </div>
+          :
+          <table className="w-full max-w-2xl border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+            <TableHeader />
+            <tbody>
+              {
+                studentContractData?.map((item) => (
+                  <TableRow
+                    key={item.id.toString()}
+                    id={item.id}
+                    age={item.age}
+                    fname={item.fname}
+                    lname={item.lname}
+                    phone_number={item.phone_number}
+                    is_active={item.is_active}
+                  />
+                ))}
+            </tbody>
+          </table>}
       </div>
 
       {/* Add New Student Modal */}
