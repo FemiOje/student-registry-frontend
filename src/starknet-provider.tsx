@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { sepolia } from "@starknet-react/chains";
 import { StarknetConfig, publicProvider, voyager } from "@starknet-react/core";
-import { availableConnectors } from "./helpers/connectors";
+import { useInjectedConnectors, argent, braavos } from "@starknet-react/core";
+
 
 interface StarknetProviderProps {
   children: ReactNode;
@@ -10,6 +11,11 @@ interface StarknetProviderProps {
 function StarknetProvider({ children }: StarknetProviderProps) {
   const chains = [sepolia];
   const provider = publicProvider();
+  const { connectors: availableConnectors } = useInjectedConnectors({
+    recommended: [argent(), braavos()],
+    includeRecommended: "always",
+    order: "alphabetical",
+  });
 
   return (
     <StarknetConfig

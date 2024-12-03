@@ -4,7 +4,6 @@ import { student_contract_abi } from "../abis/student_contract_abi";
 import toast from "react-hot-toast";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
-
 interface StudentData {
   id: bigint;
   age: bigint;
@@ -25,13 +24,14 @@ export default function Table() {
     phone_number: "",
     is_active: Boolean(true)
   });
-
+  
   const [errors, setErrors] = useState({
     fname: "",
     lname: "",
     phone_number: "",
     age: "",
   });
+  const { address } = useAccount();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -111,7 +111,6 @@ export default function Table() {
     refetchInterval: 15000
   });
 
-  const { address } = useAccount();
 
   const { contract } = useContract({
     abi: student_contract_abi,
@@ -167,6 +166,7 @@ export default function Table() {
 
     setIsNewStudentModalOpen(false);
 
+    
     await sendAddNewStudent();
     const errorMessage = addNewStudentError?.message?.toString() || "An unexpected error occurred";
 
@@ -179,19 +179,24 @@ export default function Table() {
         toast.error(errorMessage);
         break;
 
+      case "idle":
+        toast.error("Transaction is idle.");
+        break;
+
       case "success":
         toast.success("New student added successfully.");
         break;
 
+
       default:
+        console.log("Status of the transaction: ", addNewStudentStatus);
         break;
     }
   };
 
   useEffect(() => {
-    toast.loading("Fetching data");
     if (!isLoadingAllStudents) {
-      toast.dismiss();
+      toast.loading("Fetching data");
     }
 
     if (getStudentsError) {
@@ -200,6 +205,7 @@ export default function Table() {
     }
     if (allStudentsData) {
       setStudentContractData(allStudentsData);
+      toast.dismiss();
     }
   }, [allStudentsData, getStudentsError, isLoadingAllStudents]);
 
@@ -314,8 +320,6 @@ export default function Table() {
                   Cancel
                 </button>
                 <button
-                  // type="submit"
-                  // className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                   type="submit"
                   className={`px-4 py-2 rounded text-white ${isFormValid
                     ? "bg-blue-500 hover:bg-blue-600"
