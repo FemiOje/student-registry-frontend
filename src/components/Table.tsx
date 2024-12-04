@@ -27,7 +27,7 @@ export default function Table() {
   });
   const { setNewStudentDataContext } = useNewStudentContext();
 
-  
+
   const [errors, setErrors] = useState({
     fname: "",
     lname: "",
@@ -42,7 +42,7 @@ export default function Table() {
       ...newStudentData,
       [name]: value,
     });
-    
+
     setNewStudentDataContext([
       newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
       newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
@@ -50,7 +50,7 @@ export default function Table() {
       newStudentData.age ? newStudentData.age : 1,
       newStudentData.is_active,
     ]);
-    
+
     switch (name) {
       case "fname":
         if (value.length > 31) {
@@ -178,7 +178,7 @@ export default function Table() {
 
     setIsNewStudentModalOpen(false);
 
-    
+
     await sendAddNewStudent();
     const errorMessage = addNewStudentError?.message?.toString() || "An unexpected error occurred";
 
@@ -231,22 +231,24 @@ export default function Table() {
 
   return (
     <>
-      <div className="flex flex-col items-center w-fit m-auto justify-center min-h-screen p-4 sm:p-8">
+      <div className="flex flex-col items-center w-full justify-center min-h-screen p-4 sm:p-8">
         <div className="flex py-4 ml-auto">
-          <button className="bg-blue-700 text-white p-3 mx-2 rounded-md hover:bg-blue-600" onClick={() => setIsNewStudentModalOpen(true)}>Add New Student</button>
-          {/* <button className="bg-blue-700 text-white p-3 mx-2 rounded-md hover:bg-blue-600">Refresh</button> */}
+          <button
+            className="bg-blue-700 text-white p-3 mx-2 rounded-md hover:bg-blue-600"
+            onClick={() => setIsNewStudentModalOpen(true)}
+          >
+            Add New Student
+          </button>
         </div>
 
-        {studentContractData.length === 0 ?
-          <div className="ml-auto">
-            <h2 className="font-semibold">No student records to show.</h2>
-          </div>
-          :
-          <table className="w-full max-w-2xl border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-            <TableHeader />
-            <tbody>
-              {
-                studentContractData?.map((item) => (
+        {studentContractData.length === 0 ? (
+          <h2 className="font-semibold">No student records to show.</h2>
+        ) : (
+          <div className="w-full overflow-x-auto">
+            <table className="min-w-full rounded-lg shadow-lg border-collapse border border-gray-200">
+              <TableHeader />
+              <tbody>
+                {studentContractData?.map((item) => (
                   <TableRow
                     key={item.id.toString()}
                     id={item.id}
@@ -257,17 +259,17 @@ export default function Table() {
                     is_active={item.is_active}
                   />
                 ))}
-            </tbody>
-          </table>}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Add New Student Modal */}
       {isNewStudentModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-xl font-semibold mb-4">Add New Student</h2>
             <form onSubmit={handleAddNewStudent}>
-
               <div className="mb-4">
                 <label className="block text-gray-700">First Name</label>
                 <input
@@ -348,4 +350,5 @@ export default function Table() {
       )}
     </>
   );
+
 }
