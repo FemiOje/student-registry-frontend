@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useAccount, useContract, useReadContract, useSendTransaction } from "@starknet-react/core";
+import { useReadContract } from "@starknet-react/core";
 import { student_contract_abi } from "../abis/student_contract_abi";
 import toast from "react-hot-toast";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
+import { useNewStudentContext } from "../context/NewStudentContext";
 interface StudentData {
   id: bigint;
   age: bigint;
@@ -13,8 +14,18 @@ interface StudentData {
   is_active: boolean;
 }
 
+interface TableProps {
+  onSendAddNewStudent: () => void;
+  addNewStudentStatus: "error" | "success" | "pending" | "idle";
+  addNewStudentError: Error | null;
+}
 
-export default function Table() {
+export default function Table({ 
+  onSendAddNewStudent, 
+  addNewStudentStatus, 
+  addNewStudentError 
+}: TableProps) {
+
   const [studentContractData, setStudentContractData] = useState<StudentData[]>([]);
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState<boolean>(false);
   const [newStudentData, setNewStudentData] = useState({
@@ -24,6 +35,8 @@ export default function Table() {
     phone_number: "",
     is_active: Boolean(true)
   });
+  const { setNewStudentDataContext } = useNewStudentContext();
+
   
   const [errors, setErrors] = useState({
     fname: "",
@@ -31,7 +44,6 @@ export default function Table() {
     phone_number: "",
     age: "",
   });
-  const { address } = useAccount();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,7 +52,15 @@ export default function Table() {
       ...newStudentData,
       [name]: value,
     });
-
+    
+    setNewStudentDataContext([
+      newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
+      newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
+      newStudentData.phone_number ? newStudentData.phone_number : 1,
+      newStudentData.age ? newStudentData.age : 1,
+      newStudentData.is_active,
+    ]);
+    
     switch (name) {
       case "fname":
         if (value.length > 31) {
@@ -108,27 +128,27 @@ export default function Table() {
     functionName: "get_all_students",
     address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
     args: [],
-    refetchInterval: 15000
+    refetchInterval: 5000
   });
 
 
-  const { contract } = useContract({
-    abi: student_contract_abi,
-    address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
-  });
+  // const { contract } = useContract({
+  //   abi: student_contract_abi,
+  //   address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
+  // });
 
-  const { send: sendAddNewStudent, status: addNewStudentStatus, error: addNewStudentError } = useSendTransaction({
-    calls:
-      contract && address
-        ? [contract.populate("add_student", [
-          newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
-          newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
-          newStudentData.phone_number ? newStudentData.phone_number : 1,
-          newStudentData.age ? newStudentData.age : 1,
-          newStudentData.is_active
-        ])]
-        : undefined,
-  });
+  // const { send: sendAddNewStudent, status: addNewStudentStatus, error: addNewStudentError } = useSendTransaction({
+  //   calls:
+  //     contract && address
+  //       ? [contract.populate("add_student", [
+  //         newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
+  //         newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
+  //         newStudentData.phone_number ? newStudentData.phone_number : 1,
+  //         newStudentData.age ? newStudentData.age : 1,
+  //         newStudentData.is_active
+  //       ])]
+  //       : undefined,
+  // });
 
   let isValid = true;
 
@@ -167,7 +187,7 @@ export default function Table() {
     setIsNewStudentModalOpen(false);
 
     
-    await sendAddNewStudent();
+    await onSendAddNewStudent();
     const errorMessage = addNewStudentError?.message?.toString() || "An unexpected error occurred";
 
     switch (addNewStudentStatus) {

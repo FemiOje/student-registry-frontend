@@ -1,20 +1,14 @@
 import { useState, useEffect } from "react";
-import { StarknetProvider } from '../src/starknet-provider';
-import { argent, braavos, Connector, useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import { argent, braavos, Connector, useAccount, useConnect, useDisconnect, useContract, useSendTransaction } from "@starknet-react/core";
 import { Toaster } from 'react-hot-toast';
 import toast from "react-hot-toast";
 import Table from '../src/components/Table';
 import Header from '../src/components/Header';
+import { student_contract_abi } from "./abis/student_contract_abi";
+import { useNewStudentContext } from "./context/NewStudentContext";
 
 
 function App() {
-  const { connectAsync } = useConnect({});
-
-  const { address } = useAccount();
-  
-  const { disconnect } = useDisconnect();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   useEffect(() => {
     setIsModalOpen(true);
 
@@ -23,7 +17,10 @@ function App() {
     }
   }, []);
 
-
+  const { connectAsync } = useConnect({});
+  const { address } = useAccount();
+  const { disconnect } = useDisconnect();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const connectWalletWithModal = async (connector: Connector) => {
     try {
@@ -44,43 +41,58 @@ function App() {
     }
   };
 
+  const { newStudentDataContext } = useNewStudentContext();
+
+  const { contract } = useContract({
+    abi: student_contract_abi,
+    address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
+  });
+
+  const { send: sendAddNewStudent, status: addNewStudentStatus, error: addNewStudentError } = useSendTransaction({
+    calls:
+      contract && address
+        ? [contract.populate("add_student", newStudentDataContext
+          || ["null", "null", 1, 1, true]
+        )]
+        : undefined,
+  });
+
   return (
     <>
-      <StarknetProvider >
-        <Toaster />
-        <Header
-          address={address}
-          openModal={() => setIsModalOpen(true)}
-          disconnectWallet={() => disconnectWallet()}
-        />
-        <Table />
+      <Toaster />
 
-        {isModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-              <h2 className="text-lg font-semibold mb-4">Select Wallet</h2>
-              <button
-                onClick={() => connectWalletWithModal(argent())}
-                className="w-full mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Connect with Argent
-              </button>
-              <button
-                onClick={() => connectWalletWithModal(braavos())}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Connect with Braavos
-              </button>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="mt-4 w-full px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-            </div>
+      <Header
+        address={address}
+        openModal={() => setIsModalOpen(true)}
+        disconnectWallet={() => disconnectWallet()}
+      />
+      <Table onSendAddNewStudent={() => sendAddNewStudent()} addNewStudentStatus={addNewStudentStatus} addNewStudentError={addNewStudentError} />
+
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-4">Select Wallet</h2>
+            <button
+              onClick={() => connectWalletWithModal(argent())}
+              className="w-full mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Connect with Argent
+            </button>
+            <button
+              onClick={() => connectWalletWithModal(braavos())}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Connect with Braavos
+            </button>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="mt-4 w-full px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
           </div>
-        )}
-      </StarknetProvider>
+        </div>
+      )}
     </>
   )
 };
