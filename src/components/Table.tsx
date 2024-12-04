@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useReadContract } from "@starknet-react/core";
+import { useAccount, useReadContract, useContract, useSendTransaction } from "@starknet-react/core";
 import { student_contract_abi } from "../abis/student_contract_abi";
 import toast from "react-hot-toast";
 import TableHeader from "./TableHeader";
@@ -14,17 +14,7 @@ interface StudentData {
   is_active: boolean;
 }
 
-interface TableProps {
-  onSendAddNewStudent: () => void;
-  addNewStudentStatus: "error" | "success" | "pending" | "idle";
-  addNewStudentError: Error | null;
-}
-
-export default function Table({ 
-  onSendAddNewStudent, 
-  addNewStudentStatus, 
-  addNewStudentError 
-}: TableProps) {
+export default function Table() {
 
   const [studentContractData, setStudentContractData] = useState<StudentData[]>([]);
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState<boolean>(false);
@@ -132,23 +122,25 @@ export default function Table({
   });
 
 
-  // const { contract } = useContract({
-  //   abi: student_contract_abi,
-  //   address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
-  // });
+  const { contract } = useContract({
+    abi: student_contract_abi,
+    address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
+  });
 
-  // const { send: sendAddNewStudent, status: addNewStudentStatus, error: addNewStudentError } = useSendTransaction({
-  //   calls:
-  //     contract && address
-  //       ? [contract.populate("add_student", [
-  //         newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
-  //         newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
-  //         newStudentData.phone_number ? newStudentData.phone_number : 1,
-  //         newStudentData.age ? newStudentData.age : 1,
-  //         newStudentData.is_active
-  //       ])]
-  //       : undefined,
-  // });
+  const { address } = useAccount();
+
+  const { send: sendAddNewStudent, status: addNewStudentStatus, error: addNewStudentError } = useSendTransaction({
+    calls:
+      contract && address
+        ? [contract.populate("add_student", [
+          newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
+          newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
+          newStudentData.phone_number ? newStudentData.phone_number : 1,
+          newStudentData.age ? newStudentData.age : 1,
+          newStudentData.is_active
+        ])]
+        : undefined,
+  });
 
   let isValid = true;
 
@@ -187,7 +179,7 @@ export default function Table({
     setIsNewStudentModalOpen(false);
 
     
-    await onSendAddNewStudent();
+    await sendAddNewStudent();
     const errorMessage = addNewStudentError?.message?.toString() || "An unexpected error occurred";
 
     switch (addNewStudentStatus) {

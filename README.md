@@ -19,6 +19,10 @@ Contract Address: 0x079c3197737dc4b3451f1c4faefabbb7a20b3fc10474804c5b7aeaf49512
       toast.error(`Error occurred: ${error}`);
     }
   }
+   ```typescript
 
-    <p>The connection status is then used/assessed when sending a transaction to the contract, so all contract calls that require the user to be connected are handled in the App component.</p>
+   Each component that needs to affirm the connection status calls useAccount
+
+
+
 </div>

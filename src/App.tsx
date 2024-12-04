@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
-import { argent, braavos, Connector, useAccount, useConnect, useDisconnect, useContract, useSendTransaction } from "@starknet-react/core";
+import { argent, braavos, Connector, useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import { Toaster } from 'react-hot-toast';
 import toast from "react-hot-toast";
 import Table from '../src/components/Table';
 import Header from '../src/components/Header';
-import { student_contract_abi } from "./abis/student_contract_abi";
-import { useNewStudentContext } from "./context/NewStudentContext";
-
 
 function App() {
   useEffect(() => {
@@ -41,22 +38,6 @@ function App() {
     }
   };
 
-  const { newStudentDataContext } = useNewStudentContext();
-
-  const { contract } = useContract({
-    abi: student_contract_abi,
-    address: import.meta.env.VITE_STUDENT_CONTRACT_ADDRESS,
-  });
-
-  const { send: sendAddNewStudent, status: addNewStudentStatus, error: addNewStudentError } = useSendTransaction({
-    calls:
-      contract && address
-        ? [contract.populate("add_student", newStudentDataContext
-          || ["null", "null", 1, 1, true]
-        )]
-        : undefined,
-  });
-
   return (
     <>
       <Toaster />
@@ -66,7 +47,7 @@ function App() {
         openModal={() => setIsModalOpen(true)}
         disconnectWallet={() => disconnectWallet()}
       />
-      <Table onSendAddNewStudent={() => sendAddNewStudent()} addNewStudentStatus={addNewStudentStatus} addNewStudentError={addNewStudentError} />
+      <Table />
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
