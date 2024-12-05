@@ -4,7 +4,6 @@ import { student_contract_abi } from "../abis/student_contract_abi";
 import toast from "react-hot-toast";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
-import { useNewStudentContext } from "../context/NewStudentContext";
 interface StudentData {
   id: bigint;
   age: bigint;
@@ -25,7 +24,6 @@ export default function Table() {
     phone_number: "",
     is_active: Boolean(true)
   });
-  const { setNewStudentDataContext } = useNewStudentContext();
 
 
   const [errors, setErrors] = useState({
@@ -42,14 +40,6 @@ export default function Table() {
       ...newStudentData,
       [name]: value,
     });
-
-    setNewStudentDataContext([
-      newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
-      newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
-      newStudentData.phone_number ? newStudentData.phone_number : 1,
-      newStudentData.age ? newStudentData.age : 1,
-      newStudentData.is_active,
-    ]);
 
     switch (name) {
       case "fname":
