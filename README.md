@@ -2,8 +2,11 @@ Contract Address: 0x079c3197737dc4b3451f1c4faefabbb7a20b3fc10474804c5b7aeaf49512
 
 # Student Registry
 
-## Contract Address
+## Old Contract Address
 `0x079c3197737dc4b3451f1c4faefabbb7a20b3fc10474804c5b7aeaf49512cce0`
+
+## New Contract Address
+`0x079862ff1faa276c4d398e0dcaedc63245f289ad3099e84c9e3d6fdd40d5bf02`
 
 ---
 
