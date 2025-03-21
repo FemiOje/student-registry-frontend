@@ -1,30 +1,21 @@
 import { useState, useEffect } from "react";
 import { useAccount, useReadContract, useContract, useSendTransaction } from "@starknet-react/core";
 import { student_contract_abi } from "../abis/student_contract_abi";
+import { StudentData, NewStudentData } from "../types";
 import toast from "react-hot-toast";
 import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
-interface StudentData {
-  id: bigint;
-  age: bigint;
-  fname: bigint;
-  lname: bigint;
-  phone_number: bigint;
-  is_active: boolean;
-}
 
 export default function Table() {
-
   const [studentContractData, setStudentContractData] = useState<StudentData[]>([]);
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState<boolean>(false);
-  const [newStudentData, setNewStudentData] = useState({
+  const [newStudentData, setNewStudentData] = useState<NewStudentData>({
     age: "",
     fname: String(""),
     lname: String(""),
     phone_number: "",
     is_active: Boolean(true)
   });
-
 
   const [errors, setErrors] = useState({
     fname: "",

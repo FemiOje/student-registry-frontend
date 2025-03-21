@@ -3,16 +3,8 @@ import { FaTrash, FaEdit } from "react-icons/fa";
 import { bigIntToString } from "../helpers/converters";
 import { useAccount, useContract, useSendTransaction } from "@starknet-react/core";
 import { student_contract_abi } from "../abis/student_contract_abi";
+import { TableRowProps } from "../types";
 import toast from "react-hot-toast";
-
-interface TableRowProps {
-  age: bigint;
-  fname: bigint;
-  id: bigint;
-  is_active: boolean;
-  lname: bigint;
-  phone_number: bigint;
-}
 
 export default function TableRow({
   age,

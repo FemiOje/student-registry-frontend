@@ -1,10 +1,5 @@
 import { useState } from "react";
-
-interface HeaderProps {
-  address?: string | undefined;
-  openModal: () => void;
-  disconnectWallet: () => Promise<void>;
-}
+import { HeaderProps } from "../types";
 
 export default function Header({ address, openModal, disconnectWallet }: HeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
