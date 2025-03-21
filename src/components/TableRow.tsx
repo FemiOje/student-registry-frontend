@@ -133,8 +133,8 @@ export default function TableRow({
           studentFormData.id,
           studentFormData.fname && studentFormData.fname.length <= 31 ? studentFormData.fname : "null",
           studentFormData.lname && studentFormData.lname.length <= 31 ? studentFormData.lname : "null",
-          studentFormData.phone_number ? studentFormData.phone_number : 1,
-          studentFormData.age ? studentFormData.age : 1
+          studentFormData.phone_number ? BigInt(studentFormData.phone_number) : BigInt(1),
+          studentFormData.age ? BigInt(studentFormData.age) : BigInt(1)
         ])]
         : undefined,
   });

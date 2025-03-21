@@ -125,8 +125,8 @@ export default function Table() {
         ? [contract.populate("add_student", [
           newStudentData.fname && newStudentData.fname.length <= 31 ? newStudentData.fname : "null",
           newStudentData.lname && newStudentData.lname.length <= 31 ? newStudentData.lname : "null",
-          newStudentData.phone_number ? newStudentData.phone_number : 1,
-          newStudentData.age ? newStudentData.age : 1,
+          newStudentData.phone_number ? BigInt(newStudentData.phone_number) : BigInt(1),
+          newStudentData.age ? BigInt(newStudentData.age) : BigInt(1),
           newStudentData.is_active
         ])]
         : undefined,
@@ -206,7 +206,15 @@ export default function Table() {
       return;
     }
     if (allStudentsData) {
-      setStudentContractData(allStudentsData);
+      const typedData = allStudentsData.map(student => ({
+        id: BigInt(student.id),
+        age: BigInt(student.age),
+        fname: BigInt(student.fname),
+        lname: BigInt(student.lname),
+        phone_number: BigInt(student.phone_number),
+        is_active: student.is_active
+      }));
+      setStudentContractData(typedData);
       toast.dismiss();
     }
   }, [allStudentsData, getStudentsError, isLoadingAllStudents]);
